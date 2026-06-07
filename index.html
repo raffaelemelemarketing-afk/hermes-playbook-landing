@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agenti AI che funzionano — Playbook Hermes Agent</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --bg-card: #0d0d14;
+    --bg-card2: #111118;
+    --border: rgba(255,255,255,0.06);
+    --violet: #7C3AED;
+    --indigo: #4F46E5;
+    --emerald: #10b981;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: #e2e0e7;
+    font-family: 'DM Sans', sans-serif;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    top:0; left:0; width:100vw; height:100vh;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.018;
+    background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  h1, h2, h3, .font-display { font-family: 'Sora', sans-serif; }
+
+  .container { max-width: 1120px; margin:0 auto; padding:0 24px; }
+
+  .grad-text {
+    background: linear-gradient(135deg, #c4b5fd 0%, #7C3AED 50%, #4F46E5 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 14px 32px;
+    background: linear-gradient(135deg, #7C3AED, #4F46E5);
+    color: white; font-weight: 600; font-size: 1rem;
+    border-radius: 12px; border: none;
+    cursor: pointer; transition: all .3s;
+    text-decoration: none;
+  }
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 30px rgba(124,58,237,.35);
+  }
+  .btn-ghost {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 14px 32px;
+    background: transparent;
+    color: #c4b5fd; font-weight: 600; font-size: 1rem;
+    border-radius: 12px; border: 1px solid rgba(124,58,237,.3);
+    cursor: pointer; transition: all .3s;
+    text-decoration: none;
+  }
+  .btn-ghost:hover {
+    border-color: rgba(124,58,237,.6);
+    background: rgba(124,58,237,.08);
+  }
+
+  /* blob animation */
+  @keyframes blob-move {
+    0%,100% { transform: translate(0,0) scale(1); }
+    25% { transform: translate(30px,-30px) scale(1.05); }
+    50% { transform: translate(-20px,20px) scale(.95); }
+    75% { transform: translate(20px,30px) scale(1.02); }
+  }
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.15;
+    animation: blob-move 12s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .blob-1 { width: 400px; height: 400px; background: #7C3AED; top:-100px; right:-80px; }
+  .blob-2 { width: 300px; height: 300px; background: #4F46E5; bottom:-60px; left:-60px; animation-delay: -4s; }
+  .blob-3 { width: 250px; height: 250px; background: #10b981; top:50%; left:50%; animation-delay: -8s; }
+
+  /* grid background */
+  .grid-bg {
+    background-image:
+      linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  /* fade-in */
+  .fade-in-up {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity .7s ease, transform .7s ease;
+  }
+  .fade-in-up.visible { opacity: 1; transform: translateY(0); }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    transition: border-color .3s;
+  }
+  .card:hover { border-color: rgba(124,58,237,.2); }
+
+  .pricing-card {
+    background: linear-gradient(135deg, #0d0d14 0%, #111118 100%);
+    border: 1px solid rgba(124,58,237,.15);
+    border-radius: 20px;
+    padding: 40px 32px;
+    position: relative;
+    transition: all .3s;
+  }
+  .pricing-card:hover {
+    border-color: rgba(124,58,237,.35);
+    box-shadow: 0 8px 40px rgba(124,58,237,.1);
+  }
+  .pricing-card.featured {
+    border-color: #7C3AED;
+    background: linear-gradient(135deg, #0f0d1a 0%, #141128 100%);
+  }
+  .pricing-card.featured::before {
+    content: 'PIU VENDUTO';
+    position: absolute;
+    top: -12px; left: 50%; transform: translateX(-50%);
+    background: linear-gradient(135deg, #7C3AED, #4F46E5);
+    color: white; font-size: .7rem; font-weight: 700;
+    padding: 4px 16px; border-radius: 20px;
+    letter-spacing: 1px;
+  }
+
+  .check-item { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+  .check-item svg { flex-shrink: 0; margin-top: 3px; }
+
+  /* FAQ */
+  .faq-q {
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    display: flex; justify-content: space-between; align-items: center;
+    font-weight: 600;
+  }
+  .faq-a {
+    max-height: 0; overflow: hidden;
+    transition: max-height .4s ease, padding .4s ease;
+    color: #8b8a9b; line-height: 1.7;
+  }
+  .faq-a.open { max-height: 300px; padding-bottom: 20px; }
+
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { color: #8b8a9b; font-weight: 600; font-size: .85rem; text-transform: uppercase; letter-spacing: .05em; }
+  td { font-size: .95rem; }
+
+  /* navbar */
+  .navbar {
+    position: fixed; top:0; left:0; right:0;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+  }
+  .navbar .container {
+    display: flex; justify-content: space-between; align-items: center;
+  }
+
+  @media (max-width: 768px) {
+    .pricing-card { padding: 28px 20px; }
+    th, td { padding: 10px 12px; font-size: .8rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="container">
+    <a href="#" class="font-display font-bold text-lg" style="color:#e2e0e7;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:8px;">
+        <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+      </svg>
+      AI Playbook
+    </a>
+    <a href="#prezzi" class="btn-primary" style="padding:10px 20px;font-size:.85rem;">Acquista €19</a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section style="padding:140px 0 80px;position:relative;overflow:hidden;min-height:90vh;display:flex;align-items:center;">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+  <div class="grid-bg" style="position:absolute;inset:0;opacity:.4;"></div>
+
+  <div class="container" style="position:relative;z-index:1;">
+    <div style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,rgba(124,58,237,.18),rgba(167,139,250,.1));border:1px solid rgba(167,139,250,.4);border-radius:20px;padding:8px 18px;font-size:.85rem;font-weight:700;color:#c4b5fd;margin-bottom:32px;width:fit-content;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2 7h7l-5.5 4 2 7L12 16l-5.5 4 2-7L3 9h7z"/></svg>
+      Ispirato a FelixCraft, ma con Hermes Agent
+    </div>
+
+    <div style="max-width:680px;">
+      <h1 class="font-display" style="font-size:clamp(2.4rem,6vw,4rem);font-weight:800;line-height:1.08;letter-spacing:-.03em;margin-bottom:20px;">
+        <span class="grad-text">Agenti AI che funzionano.</span><br>
+        Dalla teoria a Hermes Agent.
+      </h1>
+      <p style="font-size:1.1rem;color:#8b8a9b;max-width:560px;line-height:1.7;margin-bottom:36px;">
+        Il primo playbook in italiano che ti spiega <strong style="color:#e2e0e7;">cosa e un agente AI, come funziona Hermes Agent</strong>, come configurarlo e metterlo al lavoro per il tuo business. Template inclusi.
+      </p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <a href="#prezzi" class="btn-primary">Acquista ora — €19</a>
+        <a href="#cosa-trovi" class="btn-ghost">Cosa contiene</a>
+      </div>
+    </div>
+
+    <!-- Mockup book -->
+    <div style="margin-top:60px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;max-width:800px;">
+      <div class="card" style="text-align:center;padding:24px;">
+        <div style="font-size:2rem;margin-bottom:8px;">📘</div>
+        <div style="font-weight:700;font-size:.95rem;">9 Capitoli</div>
+        <div style="font-size:.85rem;color:#8b8a9b;">Dalla teoria alla pratica</div>
+      </div>
+      <div class="card" style="text-align:center;padding:24px;">
+        <div style="font-size:2rem;margin-bottom:8px;">⚡</div>
+        <div style="font-weight:700;font-size:.95rem;">30-35 Pagine</div>
+        <div style="font-size:.85rem;color:#8b8a9b;">Vai dritto al punto</div>
+      </div>
+      <div class="card" style="text-align:center;padding:24px;">
+        <div style="font-size:2rem;margin-bottom:8px;">📎</div>
+        <div style="font-weight:700;font-size:.95rem;">Template Inclusi</div>
+        <div style="font-size:.85rem;color:#8b8a9b;">SOUL.md, config, checklist</div>
+      </div>
+      <div class="card" style="text-align:center;padding:24px;">
+        <div style="font-size:2rem;margin-bottom:8px;">🇮🇹</div>
+        <div style="font-weight:700;font-size:.95rem;">100% Italiano</div>
+        <div style="font-size:.85rem;color:#8b8a9b;">Primo in Italia</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Cosa trovi -->
+<section id="cosa-trovi" style="padding:100px 0;">
+  <div class="container">
+    <h2 class="font-display" style="font-size:2.2rem;font-weight:700;text-align:center;margin-bottom:16px;">Cosa trovi dentro</h2>
+    <p style="text-align:center;color:#8b8a9b;max-width:500px;margin:0 auto 60px;">Non e teoria. E quello che devi sapere per avere un agente AI che lavora per te.</p>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;">
+      <div class="card fade-in-up">
+        <div style="font-size:1.5rem;margin-bottom:12px;">🧠</div>
+        <h3 class="font-display" style="font-weight:700;margin-bottom:8px;">Cos'e un agente AI</h3>
+        <p style="color:#8b8a9b;font-size:.9rem;line-height:1.6;">La differenza tra chatbot e agente, anatomia, cosa puo fare subito, cosa NON e.</p>
+      </div>
+      <div class="card fade-in-up">
+        <div style="font-size:1.5rem;margin-bottom:12px;">⚡</div>
+        <h3 class="font-display" style="font-weight:700;margin-bottom:8px;">Hermes Agent</h3>
+        <p style="color:#8b8a9b;font-size:.9rem;line-height:1.6;">Self-improving, provider-agnostic, Skills Hub, file-based, multi-piattaforma, open source.</p>
+      </div>
+      <div class="card fade-in-up">
+        <div style="font-size:1.5rem;margin-bottom:12px;">🛠️</div>
+        <h3 class="font-display" style="font-weight:700;margin-bottom:8px;">Ciclo di lavoro</h3>
+        <p style="color:#8b8a9b;font-size:.9rem;line-height:1.6;">Come funziona un agente: task, strumenti, cron, sub-agenti. Esempi concreti.</p>
+      </div>
+      <div class="card fade-in-up">
+        <div style="font-size:1.5rem;margin-bottom:12px;">⚙️</div>
+        <h3 class="font-display" style="font-weight:700;margin-bottom:8px;">Configurazione</h3>
+        <p style="color:#8b8a9b;font-size:.9rem;line-height:1.6;">Installazione in 60 secondi, file config.yaml, .env, skills/. Setup passo-passo.</p>
+      </div>
+      <div class="card fade-in-up">
+        <div style="font-size:1.5rem;margin-bottom:12px;">🎭</div>
+        <h3 class="font-display" style="font-weight:700;margin-bottom:8px;">Identita e personalita</h3>
+        <p style="color:#8b8a9b;font-size:.9rem;line-height:1.6;">SOUL.md, IDENTITY.md, Trust Ladder a 4 livelli: da Read a piena autonomia.</p>
+      </div>
+      <div class="card fade-in-up">
+        <div style="font-size:1.5rem;margin-bottom:12px;">💾</div>
+        <h3 class="font-display" style="font-weight:700;margin-bottom:8px;">Memoria e conoscenza</h3>
+        <p style="color:#8b8a9b;font-size:.9rem;line-height:1.6;">3 livelli di memoria, cross-sessione, cosa salvare e cosa ignorare.</p>
+      </div>
+      <div class="card fade-in-up">
+        <div style="font-size:1.5rem;margin-bottom:12px;">📚</div>
+        <h3 class="font-display" style="font-weight:700;margin-bottom:8px;">Skill e Skills Hub</h3>
+        <p style="color:#8b8a9b;font-size:.9rem;line-height:1.6;">Catalogo, bundled, self-improving, skill custom. Il Curator che gestisce tutto.</p>
+      </div>
+      <div class="card fade-in-up">
+        <div style="font-size:1.5rem;margin-bottom:12px;">🚀</div>
+        <h3 class="font-display" style="font-weight:700;margin-bottom:8px;">Metterlo al lavoro</h3>
+        <p style="color:#8b8a9b;font-size:.9rem;line-height:1.6;">Task giornalieri, automazione social, lead management, prompt che funzionano.</p>
+      </div>
+      <div class="card fade-in-up">
+        <div style="font-size:1.5rem;margin-bottom:12px;">💰</div>
+        <h3 class="font-display" style="font-weight:700;margin-bottom:8px;">Costi e ROI</h3>
+        <p style="color:#8b8a9b;font-size:.9rem;line-height:1.6;">Quanto costa davvero, confronto agente vs dipendente, quando NON usarlo.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Confronto Felix -->
+<section style="padding:80px 0;background:var(--bg-card);">
+  <div class="container">
+    <h2 class="font-display" style="font-size:2rem;font-weight:700;text-align:center;margin-bottom:40px;">Perche questo e diverso da FelixCraft</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            <th>FelixCraft</th>
+            <th>Questo playbook</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="font-weight:600;">Piattaforma</td>
+            <td>OpenClaw</td>
+            <td style="color:#c4b5fd;">Hermes Agent</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600;">Lingua</td>
+            <td>Inglese</td>
+            <td style="color:#c4b5fd;">Italiano</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600;">Pagine</td>
+            <td>66 (con fluff)</td>
+            <td style="color:#c4b5fd;">30-35 (solo sostanza)</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600;">Prezzo</td>
+            <td>$29 USD</td>
+            <td style="color:#c4b5fd;">€19 EUR</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600;">Template</td>
+            <td>In inglese</td>
+            <td style="color:#c4b5fd;">In italiano, pronti all'uso</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600;">Self-improving</td>
+            <td>No</td>
+            <td style="color:#c4b5fd;">Si — Hermes impara da solo</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600;">Skills Hub</td>
+            <td>No</td>
+            <td style="color:#c4b5fd;">Si — catalogo centinaia di skill</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600;">Provider</td>
+            <td>Solo OpenClaw</td>
+            <td style="color:#c4b5fd;">20+ provider (DeepSeek, Claude, GPT…)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Chi e per -->
+<section style="padding:80px 0;">
+  <div class="container">
+    <h2 class="font-display" style="font-size:2rem;font-weight:700;text-align:center;margin-bottom:16px;">Per chi e questo playbook</h2>
+    <p style="text-align:center;color:#8b8a9b;max-width:500px;margin:0 auto 50px;">Se sei in una di queste categorie, il playbook e per te.</p>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;">
+      <div class="card fade-in-up" style="text-align:center;padding:40px 24px;">
+        <div style="font-size:2.5rem;margin-bottom:16px;">👤</div>
+        <h3 class="font-display" style="font-weight:700;margin-bottom:8px;">Solopreneur</h3>
+        <p style="color:#8b8a9b;font-size:.9rem;">Lavori da solo e vuoi un assistente che lavora 24/7 senza assumere nessuno.</p>
+      </div>
+      <div class="card fade-in-up" style="text-align:center;padding:40px 24px;">
+        <div style="font-size:2.5rem;margin-bottom:16px;">📈</div>
+        <h3 class="font-display" style="font-weight:700;margin-bottom:8px;">Marketer</h3>
+        <p style="color:#8b8a9b;font-size:.9rem;">Vuoi automatizzare content, social, lead generation e analisi competitor.</p>
+      </div>
+      <div class="card fade-in-up" style="text-align:center;padding:40px 24px;">
+        <div style="font-size:2.5rem;margin-bottom:16px;">🏢</div>
+        <h3 class="font-display" style="font-weight:700;margin-bottom:8px;">Micro-impresa</h3>
+        <p style="color:#8b8a9b;font-size:.9rem;">Team piccolo, budget limitato. Un agente AI costa meno di un part-time.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Template preview -->
+<section style="padding:80px 0;background:var(--bg-card);">
+  <div class="container">
+    <h2 class="font-display" style="font-size:2rem;font-weight:700;text-align:center;margin-bottom:16px;">Template inclusi</h2>
+    <p style="text-align:center;color:#8b8a9b;max-width:500px;margin:0 auto 50px;">Scaricabili, personalizzabili, pronti da usare.</p>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;">
+      <div class="card" style="padding:20px;text-align:center;">
+        <div style="font-size:1.8rem;margin-bottom:6px;">📜</div>
+        <div style="font-weight:600;font-size:.9rem;">SOUL.md</div>
+        <div style="font-size:.8rem;color:#8b8a9b;">Personalita e tono</div>
+      </div>
+      <div class="card" style="padding:20px;text-align:center;">
+        <div style="font-size:1.8rem;margin-bottom:6px;">🆔</div>
+        <div style="font-weight:600;font-size:.9rem;">IDENTITY.md</div>
+        <div style="font-size:.8rem;color:#8b8a9b;">Competenze e limiti</div>
+      </div>
+      <div class="card" style="padding:20px;text-align:center;">
+        <div style="font-size:1.8rem;margin-bottom:6px;">⚙️</div>
+        <div style="font-weight:600;font-size:.9rem;">config.yaml</div>
+        <div style="font-size:.8rem;color:#8b8a9b;">Config Hermes commentata</div>
+      </div>
+      <div class="card" style="padding:20px;text-align:center;">
+        <div style="font-size:1.8rem;margin-bottom:6px;">🪜</div>
+        <div style="font-weight:600;font-size:.9rem;">Trust Ladder</div>
+        <div style="font-size:.8rem;color:#8b8a9b;">5 livelli in italiano</div>
+      </div>
+      <div class="card" style="padding:20px;text-align:center;">
+        <div style="font-size:1.8rem;margin-bottom:6px;">📋</div>
+        <div style="font-weight:600;font-size:.9rem;">Checklist 7 giorni</div>
+        <div style="font-size:.8rem;color:#8b8a9b;">Setup passo-passo</div>
+      </div>
+      <div class="card" style="padding:20px;text-align:center;">
+        <div style="font-size:1.8rem;margin-bottom:6px;">🛡️</div>
+        <div style="font-weight:600;font-size:.9rem;">Safety Rails</div>
+        <div style="font-size:.8rem;color:#8b8a9b;">Cosa NON far fare</div>
+      </div>
+      <div class="card" style="padding:20px;text-align:center;">
+        <div style="font-size:1.8rem;margin-bottom:6px;">💬</div>
+        <div style="font-weight:600;font-size:.9rem;">10 Prompt</div>
+        <div style="font-size:.8rem;color:#8b8a9b;">Pronti all'uso in italiano</div>
+      </div>
+      <div class="card" style="padding:20px;text-align:center;">
+        <div style="font-size:1.8rem;margin-bottom:6px;">📎</div>
+        <div style="font-weight:600;font-size:.9rem;">Skill Template</div>
+        <div style="font-size:.8rem;color:#8b8a9b;">Custom skill pronta</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Pricing -->
+<section id="prezzi" style="padding:100px 0;">
+  <div class="container">
+    <h2 class="font-display" style="font-size:2.2rem;font-weight:700;text-align:center;margin-bottom:12px;">Il playbook</h2>
+    <p style="text-align:center;color:#8b8a9b;margin-bottom:50px;">Prezzo giusto per quello che vale. Niente abbonamenti, niente sorprese.</p>
+
+    <div style="max-width:400px;margin:0 auto;">
+      <div class="pricing-card featured fade-in-up">
+        <div style="text-align:center;margin-bottom:24px;">
+          <div style="font-size:3rem;font-weight:800;color:#e2e0e7;" class="font-display">
+            €19
+          </div>
+          <div style="color:#8b8a9b;font-size:.9rem;">Una tantum — niente abbonamento</div>
+        </div>
+        <div style="margin-bottom:32px;">
+          <div class="check-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+            <span>PDF 30-35 pagine</span>
+          </div>
+          <div class="check-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+            <span>9 capitoli + appendice</span>
+          </div>
+          <div class="check-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+            <span>Template SOUL.md, IDENTITY.md</span>
+          </div>
+          <div class="check-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+            <span>Config Hermes commentata</span>
+          </div>
+          <div class="check-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+            <span>Trust Ladder checklist 7 giorni</span>
+          </div>
+          <div class="check-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+            <span>Safety rails + 10 prompt IT</span>
+          </div>
+        </div>
+        <a href="#" onclick="alert('Link pagamento da configurare')" class="btn-primary" style="width:100%;justify-content:center;padding:16px;">
+          Acquista ora — €19
+        </a>
+        <p style="text-align:center;color:#8b8a9b;font-size:.8rem;margin-top:12px;">
+          Ricevi il PDF via email. Download immediato.
+        </p>
+      </div>
+    </div>
+
+    <!-- Upsell -->
+    <div style="margin-top:60px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;">
+      <div class="card" style="padding:24px;text-align:center;">
+        <div style="font-size:2rem;margin-bottom:8px;">🛍️</div>
+        <div style="font-weight:700;font-size:1.1rem;">Skill SkillClaw</div>
+        <div style="color:#8b8a9b;font-size:.85rem;margin:8px 0;">Skill pronte per Hermes</div>
+        <div style="font-weight:700;font-size:1.3rem;color:#c4b5fd;">da €9/mese</div>
+      </div>
+      <div class="card" style="padding:24px;text-align:center;">
+        <div style="font-size:2rem;margin-bottom:8px;">🎙️</div>
+        <div style="font-weight:700;font-size:1.1rem;">Call Audit 1:1</div>
+        <div style="color:#8b8a9b;font-size:.85rem;margin:8px 0;">30 min, configuriamo insieme</div>
+        <div style="font-weight:700;font-size:1.3rem;color:#c4b5fd;">€150</div>
+      </div>
+      <div class="card" style="padding:24px;text-align:center;">
+        <div style="font-size:2rem;margin-bottom:8px;">🤖</div>
+        <div style="font-weight:700;font-size:1.1rem;">Agente Pro</div>
+        <div style="color:#8b8a9b;font-size:.85rem;margin:8px 0;">Setup completo + monitoring</div>
+        <div style="font-weight:700;font-size:1.3rem;color:#c4b5fd;">€2.490 + €149/m</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section style="padding:80px 0;background:var(--bg-card);">
+  <div class="container" style="max-width:680px;">
+    <h2 class="font-display" style="font-size:2rem;font-weight:700;text-align:center;margin-bottom:40px;">Domande frequenti</h2>
+
+    <div class="faq-q" onclick="toggleFaq(this)">
+      <span>Devo sapere programmare per usare Hermes Agent?</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+    <div class="faq-a">No. Hermes si installa con un comando e si configura con file YAML e Markdown leggibili da chiunque. Se sai usare un computer, sai configurare Hermes.</div>
+
+    <div class="faq-q" onclick="toggleFaq(this)">
+      <span>Quanto costa mantenerlo?</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+    <div class="faq-a">Il software e gratuito (open source). Paghi solo il modello AI: con DeepSeek circa 0.15 EUR al giorno. Hosting sul tuo PC e gratuito, un VPS costa 5 EUR/mese.</div>
+
+    <div class="faq-q" onclick="toggleFaq(this)">
+      <span>Cosa ricevo dopo l'acquisto?</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+    <div class="faq-a">Ricevi il PDF del playbook via email, con tutti i template allegati scaricabili. Download immediato.</div>
+
+    <div class="faq-q" onclick="toggleFaq(this)">
+      <span>E se non mi piace?</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+    <div class="faq-a">Se dopo aver letto il playbook non hai imparato niente di utile, ti rimborsiamo. Senza storie.</div>
+
+    <div class="faq-q" onclick="toggleFaq(this)">
+      <span>E' uguale al PDF di FelixCraft?</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+    <div class="faq-a">No. Prende spunto dal formato (SOUL.md, Trust Ladder, template) ma e basato su Hermes Agent, non OpenClaw. E in italiano, piu snello (30 pagine contro 66), e costa meno.</div>
+  </div>
+</section>
+
+<!-- CTA Final -->
+<section style="padding:100px 0;text-align:center;">
+  <div class="container">
+    <h2 class="font-display" style="font-size:2.2rem;font-weight:700;margin-bottom:16px;">Pronto a far lavorare un agente per te?</h2>
+    <p style="color:#8b8a9b;max-width:450px;margin:0 auto 36px;">Il playbook ti dice come. Hermes Agent lo fa funzionare. Noi ti supportiamo.</p>
+    <a href="#prezzi" class="btn-primary" style="padding:16px 48px;font-size:1.1rem;">Acquista il playbook — €19</a>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer style="padding:40px 0;border-top:1px solid var(--border);text-align:center;color:#5a5a6a;font-size:.85rem;">
+  <div class="container">
+    <p>AI Next Studio &mdash; 2026</p>
+    <p style="margin-top:4px;">Hermes Agent e open source (MIT) by Nous Research.</p>
+  </div>
+</footer>
+
+<script>
+// Intersection Observer for fade-in
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: .1 });
+document.querySelectorAll('.fade-in-up').forEach(el => observer.observe(el));
+
+// FAQ toggle
+function toggleFaq(el) {
+  const answer = el.nextElementSibling;
+  answer.classList.toggle('open');
+  const icon = el.querySelector('svg');
+  icon.style.transform = answer.classList.contains('open') ? 'rotate(180deg)' : '';
+}
+</script>
+
+</body>
+</html>
